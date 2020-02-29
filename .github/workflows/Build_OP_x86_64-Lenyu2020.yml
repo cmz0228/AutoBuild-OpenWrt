@@ -1,0 +1,134 @@
+#=================================================
+# Description: Build OpenWrt using GitHub Actions
+# Lisence: MIT
+# Author: eSirPlayground
+# Youtube Channel: https://goo.gl/fvkdwm 
+#=================================================
+
+name: Build_x86_64-Lenyu2020
+
+on: 
+ # release:
+ #   types: [published]
+
+  #push:
+  #  branches: 
+  #    - master
+
+    schedule:
+      - cron: 0 6 * * *
+  
+    watch:
+     types: [started]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@master
+
+    - name: Initialization environment
+      env:
+        DEBIAN_FRONTEND: noninteractive
+      run: |
+        docker rmi `docker images -q`
+        echo "Deleting files, please wait ..."
+        sudo rm -rf \
+          /usr/share/dotnet \
+          /etc/mysql \
+          /etc/php
+        sudo -E apt-get -y purge \
+          azure-cli \
+          ghc* \
+          zulu* \
+          hhvm \
+          llvm* \
+          firefox \
+          google* \
+          dotnet* \
+          powershell \
+          openjdk* \
+          mysql* \
+          php*
+        sudo -E apt-get update
+        sudo -E apt-get -y install build-essential asciidoc binutils bzip2 gawk gettext git libncurses5-dev patch unzip zlib1g-dev lib32gcc1 libc6-dev-i386 subversion flex node-uglify gcc-multilib p7zip p7zip-full msmtp libssl-dev texinfo libglib2.0-dev xmlto qemu-utils upx-ucl libelf-dev autoconf automake libtool autopoint device-tree-compiler libuv-dev
+        sudo -E apt-get -y autoremove --purge
+        sudo -E apt-get clean
+
+    - name: Clone source code
+      env: 
+        REPO_URL: https://github.com/coolsnowwolf/lede
+        REPO_BRANCH: master
+      run: git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
+    
+  #  - name: 添加Server酱,微信推送插件
+  #    run: |
+  #     cd openwrt/package && git clone https://github.com/tty228/luci-app-serverchan
+      
+    - name: Aad Lienol feeds
+      run: |
+         echo "src-git lienol https://github.com/Lienol/openwrt-package" >> openwrt/feeds.conf.default
+
+    - name: Update & Install feeds
+      working-directory: ./openwrt
+      run: |
+        ./scripts/feeds update -a
+        ./scripts/feeds install -a
+        ./scripts/feeds install -a
+
+  #  - name: Configuration Customization - P3TERX
+  #    env:
+  #      CONFIG_FILE: '.config'
+  #    run: |
+   #    [ -e files ] && mv files openwrt/files
+   #    [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+    #        chmod +x ./customize.sh && ./customize.sh
+     #       cd openwrt && make defconfig
+     
+    - name: Configuration Customization - Build_x86_64
+      env:
+       CONFIG_FILE: 'x86_642.config'
+      run: |
+        [ -e $CONFIG_FILE ] && mv $CONFIG_FILE openwrt/.config
+        chmod +x ./customize2.sh && ./customize2.sh
+        cd openwrt && make defconfig
+        
+   # - name: SSH connection to Actions
+   #   uses: P3TERX/debugger-action@master
+
+        
+    - name: Download package
+      working-directory: ./openwrt
+      run: |
+        make download -j$(nproc)
+        find dl -size -1024c -exec ls -l {} \;
+        find dl -size -1024c -exec rm -f {} \;
+
+    - name: Build firmware
+      working-directory: ./openwrt
+      run: |
+        echo -e "$(nproc) thread build."
+        make -j$(nproc) V=s
+      
+    - name: delete packages
+      working-directory: ./openwrt
+      run: |
+        rm -rf bin/targets/x86/64/packages
+        rm -rf bin/targets/x86/64/openwrt-x86-64-generic.manifest
+        rm -rf bin/targets/x86/64/openwrt-x86-64-rootfs-squashfs.img.gz
+        rm -rf bin/targets/x86/64/openwrt-x86-64-combined-squashfs.vmdk
+        rm -rf bin/targets/x86/64/config.seed
+        rm -rf bin/targets/x86/64/openwrt-x86-64-vmlinuz
+        sleep 3
+        stre=`sed '10!d'  include/kernel-version.mk` >nul 2>nul
+        sleep 2
+        mv bin/targets/x86/64/openwrt-x86-64-combined-squashfs.img.gz  bin/targets/x86/64/openwrt_x86-64-`date '+%m%d'`_4.14.`echo ${stre#* .}`_dev_Lenyu.img.gz
+        mv bin/targets/x86/64/sha256sums bin/targets/x86/64/sha256sums.txt
+        mv bin/targets/x86/64/openwrt-x86-64-uefi-gpt-squashfs.img.gz  bin/targets/x86/64/openwrt_x86-64-`date '+%m%d'`_4.14.`echo ${stre#* .}`_uefi-gpt_dev_Lenyu.img.gz
+    - name : Upload artifact
+      uses: actions/upload-artifact@master     
+      with:
+        name: OpenWrt
+        path: openwrt/bin/targets/x86/64
