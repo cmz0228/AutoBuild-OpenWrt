@@ -11,3 +11,4 @@ sed -i 's/192.168.1.1/192.168.100.18/g' openwrt/package/base-files/files/bin/con
 git clone https://github.com/pymumu/smartdns.git package/smartdns
 git clone https://github.com/Leo-Jo-My/luci-theme-opentomcat.git package/luci-theme-opentomcat
 git clone https://github.com/rosywrt/luci-theme-rosy.git
+git clone https://github.com/openwrt-develop/luci-theme-atmaterial.git
