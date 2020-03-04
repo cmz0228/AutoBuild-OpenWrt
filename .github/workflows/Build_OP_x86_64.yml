@@ -63,6 +63,22 @@ jobs:
         REPO_BRANCH: master
       run: git clone --depth 1 $REPO_URL -b $REPO_BRANCH openwrt
       
+    - name: 添加自定义插件1
+      run: |
+        cd openwrt/package && git clone https://github.com/Flowers-in-thorns/luci-app-vssr-coexist.git
+        
+    - name: 添加自定义插件2
+      run: |
+        cd openwrt/package && git clone https://github.com/rosywrt/luci-theme-rosy.git
+        
+    - name: 添加自定义插件3
+      run: |
+        cd openwrt/package && git clone https://github.com/Aslin-Ameng/luci-theme-Night.git
+        
+    - name: 添加自定义插件4
+      run: |
+        cd openwrt/package && git clone https://github.com/Leo-Jo-My/luci-theme-opentomcat.git
+    
     - name: '下载passwall'
       run: cd openwrt/package && git clone https://github.com/Lienol/openwrt-package.git
        
