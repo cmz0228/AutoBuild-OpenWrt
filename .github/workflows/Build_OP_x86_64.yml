@@ -65,7 +65,7 @@ jobs:
       
     - name: 添加自定义插件1
       run: |
-        cd openwrt/package && git clone https://github.com/Flowers-in-thorns/luci-app-vssr-coexist.git
+        cd openwrt/package && git clone https://github.com/cmz0228/luci-app-vssr-coexist.git
         
     - name: 添加自定义插件2
       run: |
